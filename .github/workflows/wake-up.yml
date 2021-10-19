@@ -1,10 +1,12 @@
+name: Wake up the bot
+
 on:
   workflow_dispatch:
-  cron: '*/20 9-23,0-3 * * *'
+  schedule:
+    cron: '*/20 9-23,0-3 * * *'
 
 jobs:
-  wake_up:
+  wake-up:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          curl https://gogogadgetto.herokuapp.com
+      - run: curl https://gogogadgetto.herokuapp.com
