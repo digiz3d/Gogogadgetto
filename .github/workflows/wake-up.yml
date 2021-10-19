@@ -1,0 +1,10 @@
+on:
+  workflow_dispatch:
+  cron: '*/20 9-23,0-3 * * *'
+
+jobs:
+  wake_up:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl https://gogogadgetto.herokuapp.com

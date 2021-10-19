@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -36,6 +37,8 @@ func main() {
 
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "OK")
+		currentTime := time.Now()
+		fmt.Printf("Received request at %v!!\n", currentTime.Format("2006-01-02 15:04:05"))
 	})
 
 	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
