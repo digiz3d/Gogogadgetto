@@ -78,20 +78,20 @@ func getChannelName(s *discordgo.Session, userId string) string {
 }
 
 func onPresenceEvent(s *discordgo.Session, m *discordgo.PresenceUpdate) {
-	fmt.Printf("presence %v %v\n", m.Presence.Status, m.User.ID)
+	fmt.Printf("Presence: %v %v\n", m.Presence.Status, getUserName(s, m.User.ID))
 }
 
 func onVoiceEvent(s *discordgo.Session, m *discordgo.VoiceStateUpdate) {
-	fmt.Printf("Voice: user: %v, channel: %v, %v\n", getUserName(s, m.UserID), getChannelName(s, m.ChannelID), m.VoiceState.SelfMute)
+	fmt.Printf("Voice: user %v, channel: %v, %v\n", getUserName(s, m.UserID), getChannelName(s, m.ChannelID), m.VoiceState.SelfMute)
 }
 
 func onChannelEvent(s *discordgo.Session, m *discordgo.VoiceStateUpdate) {
-	fmt.Printf("Channel %v switched to %v \n", getUserName(s, m.UserID), getChannelName(s, m.ChannelID))
+	fmt.Printf("Channel: %v switched to %v \n", getUserName(s, m.UserID), getChannelName(s, m.ChannelID))
 }
 
 func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	CHANNEL_ID := os.Getenv("CHANNEL_ID")
-	fmt.Printf("message %v\n", m.Type)
+	fmt.Printf("Message: %v\n", m.Type)
 
 	if m.ChannelID != CHANNEL_ID || m.Author.ID == s.State.User.ID {
 		return
