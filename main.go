@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +16,7 @@ import (
 )
 
 func main() {
+	words := []string{"wesh", "bien", "sisi"}
 	godotenv.Load()
 	BOT_TOKEN := os.Getenv("BOT_TOKEN")
 
@@ -36,6 +38,21 @@ func main() {
 		return
 	}
 
+	ticker := time.NewTicker(2 * time.Minute)
+
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				d.UpdateGameStatus(0, words[rand.Intn(len(words))])
+			case <-quit:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "OK")
 		currentTime := time.Now()
@@ -50,6 +67,7 @@ func main() {
 	<-sc
 
 	fmt.Println("closing discord")
+	close(quit)
 	d.Close()
 }
 
