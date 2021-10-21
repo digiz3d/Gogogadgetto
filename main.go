@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -99,11 +100,20 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	hellowords := []string{"hey", "bonjour", "hi", "salut", "wesh"}
 
-	if m.Author.ID == os.Getenv("MASTER_ID") && contains(hellowords, strings.ToLower(m.Content)) {
-		s.ChannelMessageSendReply(CHANNEL_ID, "Hello, master", m.Reference())
+	reg := regexp.MustCompile(`(?i)^w(?P<e>e+)sh.*`)
+	matches := reg.FindStringSubmatch(m.Content)
+	indexMatch := reg.SubexpIndex("e")
+	eeeee := matches[indexMatch]
+
+	if m.Author.ID != os.Getenv("ADIBOU_ID") && len(matches) > 0 {
+		s.ChannelMessageSendReply(CHANNEL_ID, "w"+eeeee+"sh alors", m.Reference())
+		return
 	}
 
-	fmt.Printf("len embeds %v\n", len(m.Embeds))
+	if m.Author.ID == os.Getenv("MASTER_ID") && contains(hellowords, strings.ToLower(m.Content)) {
+		s.ChannelMessageSendReply(CHANNEL_ID, "Hello, master", m.Reference())
+		return
+	}
 
 	if m.Author.ID == os.Getenv("ADIBOU_ID") {
 		s.MessageReactionAdd(CHANNEL_ID, m.ID, ":hugging:")
@@ -112,6 +122,4 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Content == "random poop" {
 		s.ChannelMessageSendReply(CHANNEL_ID, "Fucking poop lover :man_facepalming:", m.Reference())
 	}
-
-	fmt.Println("alors là")
 }
