@@ -116,17 +116,20 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	hellowords := []string{"hey", "bonjour", "hi", "salut", "wesh"}
-
 	reg := regexp.MustCompile(`(?i)^w(?P<e>e+)sh.*`)
 	matches := reg.FindStringSubmatch(m.Content)
-	indexMatch := reg.SubexpIndex("e")
-	eeeee := matches[indexMatch]
 
-	if m.Author.ID != os.Getenv("ADIBOU_ID") && len(matches) > 0 {
-		s.ChannelMessageSendReply(CHANNEL_ID, "w"+eeeee+"sh alors", m.Reference())
-		return
+	if matches != nil {
+		indexMatch := reg.SubexpIndex("e")
+		eeeee := matches[indexMatch]
+
+		if m.Author.ID != os.Getenv("ADIBOU_ID") && len(matches) > 0 {
+			s.ChannelMessageSendReply(CHANNEL_ID, "w"+eeeee+"sh alors", m.Reference())
+			return
+		}
 	}
+
+	hellowords := []string{"hey", "bonjour", "hi", "salut", "wesh"}
 
 	if m.Author.ID == os.Getenv("MASTER_ID") && contains(hellowords, strings.ToLower(m.Content)) {
 		s.ChannelMessageSendReply(CHANNEL_ID, "Hello, master", m.Reference())
