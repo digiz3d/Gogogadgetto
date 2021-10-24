@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -15,8 +16,29 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var (
+	bad_ajectives []string
+	bad_nouns     []string
+)
+
+func readJsonFileAsStrings(path string) []string {
+	data, err := os.ReadFile(path)
+
+	if err != nil {
+		panic(err)
+	}
+
+	var strings []string
+	json.Unmarshal([]byte(data), &strings)
+	return strings
+}
+
 func main() {
 	words := []string{"wesh", "bien", "sisi"}
+
+	bad_ajectives = readJsonFileAsStrings("./bad-ajdectives.json")
+	bad_nouns = readJsonFileAsStrings("./bad-nouns.json")
+
 	godotenv.Load()
 	BOT_TOKEN := os.Getenv("BOT_TOKEN")
 
@@ -79,7 +101,9 @@ func contains(arr []string, str string) bool {
 	}
 	return false
 }
-
+func makeUserRef(userId string) string {
+	return fmt.Sprintf("<@%s>", userId)
+}
 func getUserName(s *discordgo.Session, userId string) string {
 	user, err := s.User(userId)
 	if err != nil {
@@ -95,9 +119,17 @@ func getChannelName(s *discordgo.Session, userId string) string {
 	}
 	return channel.Name
 }
+func makeInsult() string {
+	return fmt.Sprintf("%s %s", bad_ajectives[rand.Intn(len(bad_ajectives))], bad_nouns[rand.Intn(len(bad_nouns))])
+}
 
 func onPresenceEvent(s *discordgo.Session, m *discordgo.PresenceUpdate) {
+	CHANNEL_ID := os.Getenv("CHANNEL_ID")
 	fmt.Printf("Presence: %v %v\n", m.Presence.Status, getUserName(s, m.User.ID))
+
+	if m.Presence.Status == discordgo.StatusOnline && rand.Intn(2) == 0 {
+		s.ChannelMessageSend(CHANNEL_ID, fmt.Sprintf("%s %s !", makeUserRef(m.User.ID), makeInsult()))
+	}
 }
 
 func onVoiceEvent(s *discordgo.Session, m *discordgo.VoiceStateUpdate) {
