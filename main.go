@@ -17,9 +17,22 @@ import (
 )
 
 var (
+	ADIBOU_ID     string
 	bad_ajectives []string
 	bad_nouns     []string
+	BOT_TOKEN     string
+	CHANNEL_ID    string
+	MASTER_ID     string
+	PORT          string
 )
+
+func initEnv() {
+	ADIBOU_ID = os.Getenv("ADIBOU_ID")
+	BOT_TOKEN = os.Getenv("BOT_TOKEN")
+	CHANNEL_ID = os.Getenv("CHANNEL_ID")
+	MASTER_ID = os.Getenv("MASTER_ID")
+	PORT = os.Getenv("PORT")
+}
 
 func readJsonFileAsStrings(path string) []string {
 	data, err := os.ReadFile(path)
@@ -40,7 +53,7 @@ func main() {
 	bad_nouns = readJsonFileAsStrings("./bad-nouns.json")
 
 	godotenv.Load()
-	BOT_TOKEN := os.Getenv("BOT_TOKEN")
+	initEnv()
 
 	d, err := discordgo.New("Bot " + BOT_TOKEN)
 	if err != nil {
@@ -81,7 +94,7 @@ func main() {
 		fmt.Printf("Received request at %v!!\n", currentTime.Format("2006-01-02 15:04:05"))
 	})
 
-	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	go http.ListenAndServe(":"+PORT, nil)
 
 	fmt.Println("ready")
 	sc := make(chan os.Signal, 1)
@@ -124,7 +137,6 @@ func makeInsult() string {
 }
 
 func onPresenceEvent(s *discordgo.Session, m *discordgo.PresenceUpdate) {
-	CHANNEL_ID := os.Getenv("CHANNEL_ID")
 	fmt.Printf("Presence: %v %v\n", m.Presence.Status, getUserName(s, m.User.ID))
 
 	if m.Presence.Status == discordgo.StatusOnline && rand.Intn(2) == 0 {
@@ -141,7 +153,6 @@ func onChannelEvent(s *discordgo.Session, m *discordgo.VoiceStateUpdate) {
 }
 
 func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
-	CHANNEL_ID := os.Getenv("CHANNEL_ID")
 	fmt.Printf("Message: %v\n", m.Type)
 
 	if m.ChannelID != CHANNEL_ID || m.Author.ID == s.State.User.ID {
@@ -155,7 +166,7 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		indexMatch := reg.SubexpIndex("e")
 		eeeee := matches[indexMatch]
 
-		if m.Author.ID != os.Getenv("ADIBOU_ID") && len(matches) > 0 {
+		if m.Author.ID != ADIBOU_ID && len(matches) > 0 {
 			s.ChannelMessageSendReply(CHANNEL_ID, "w"+eeeee+"sh alors", m.Reference())
 			return
 		}
@@ -163,12 +174,12 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	hellowords := []string{"hey", "bonjour", "hi", "salut", "wesh"}
 
-	if m.Author.ID == os.Getenv("MASTER_ID") && contains(hellowords, strings.ToLower(m.Content)) {
+	if m.Author.ID == MASTER_ID && contains(hellowords, strings.ToLower(m.Content)) {
 		s.ChannelMessageSendReply(CHANNEL_ID, "Hello, master", m.Reference())
 		return
 	}
 
-	if m.Author.ID == os.Getenv("ADIBOU_ID") {
+	if m.Author.ID == ADIBOU_ID {
 		s.MessageReactionAdd(CHANNEL_ID, m.ID, ":hugging:")
 	}
 
