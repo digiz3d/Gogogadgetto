@@ -138,10 +138,6 @@ func makeInsult() string {
 
 func onPresenceEvent(s *discordgo.Session, m *discordgo.PresenceUpdate) {
 	fmt.Printf("Presence: %v %v\n", m.Presence.Status, getUserName(s, m.User.ID))
-
-	if m.Presence.Status == discordgo.StatusOnline && rand.Intn(2) == 0 {
-		s.ChannelMessageSend(CHANNEL_ID, fmt.Sprintf("%s %s !", makeUserRef(m.User.ID), makeInsult()))
-	}
 }
 
 func onVoiceEvent(s *discordgo.Session, m *discordgo.VoiceStateUpdate) {
@@ -173,6 +169,10 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	hellowords := []string{"hey", "bonjour", "hi", "salut", "wesh"}
+
+	if m.Content == "!insult" {
+		s.ChannelMessageSendReply(CHANNEL_ID, fmt.Sprintf("%s %s !", makeUserRef(m.Author.ID), makeInsult()), m.Reference())
+	}
 
 	if m.Author.ID == MASTER_ID && contains(hellowords, strings.ToLower(m.Content)) {
 		s.ChannelMessageSendReply(CHANNEL_ID, "Hello, master", m.Reference())
