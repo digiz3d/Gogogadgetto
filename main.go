@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )
@@ -47,7 +48,7 @@ func readJsonFileAsStrings(path string) []string {
 }
 
 func main() {
-	words := []string{"wesh", "bien", "sisi"}
+	words := []string{"Adibou", "Fortnite", "Couter strike: Global warming"}
 
 	bad_ajectives = readJsonFileAsStrings("./bad-ajdectives.json")
 	bad_nouns = readJsonFileAsStrings("./bad-nouns.json")
@@ -55,23 +56,31 @@ func main() {
 	godotenv.Load()
 	initEnv()
 
-	d, err := discordgo.New("Bot " + BOT_TOKEN)
+	discord, err := discordgo.New("Bot " + BOT_TOKEN)
 	if err != nil {
 		return
 	}
 
-	d.AddHandler(onPresenceEvent)
-	d.AddHandler(onMessageEvent)
-	d.AddHandler(onVoiceEvent)
-	d.AddHandler(onChannelEvent)
+	discord.AddHandler(onPresenceEvent)
+	discord.AddHandler(onMessageEvent)
+	discord.AddHandler(onVoiceEvent)
+	discord.AddHandler(onChannelEvent)
 
-	d.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuildPresences | discordgo.IntentsGuildMessageTyping | discordgo.IntentsGuildVoiceStates
+	discord.Identify.Intents = discordgo.IntentsAll
 
-	err = d.Open()
+	err = discord.Open()
 	if err != nil {
 		fmt.Println("error opening connection,", err)
 		return
 	}
+
+	// voiceConnection, err := discord.ChannelVoiceJoin("152812927047434240", "337991922851250178", false, false)
+	// if err != nil {
+	// 	fmt.Println("fml:,", err.Error())
+	// 	return
+
+	// }
+	// fmt.Println("the channel id is,", voiceConnection.ChannelID)
 
 	ticker := time.NewTicker(2 * time.Minute)
 
@@ -80,7 +89,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				d.UpdateGameStatus(0, words[rand.Intn(len(words))])
+				discord.UpdateGameStatus(0, words[rand.Intn(len(words))])
 			case <-quit:
 				ticker.Stop()
 				return
@@ -103,7 +112,7 @@ func main() {
 
 	fmt.Println("closing discord")
 	close(quit)
-	d.Close()
+	discord.Close()
 }
 
 func contains(arr []string, str string) bool {
@@ -185,5 +194,33 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Content == "random poop" {
 		s.ChannelMessageSendReply(CHANNEL_ID, "Fucking poop lover :man_facepalming:", m.Reference())
+	}
+
+	if m.Content == "clear 1" {
+		vc, err := s.ChannelVoiceJoin("152812927047434240", "337991922851250178", false, false)
+		if err != nil {
+			fmt.Println("fml:,", err.Error())
+			return
+
+		}
+		defer vc.Close()
+
+		fmt.Println("the channel id is,", vc.ChannelID)
+		recv := make(chan *discordgo.Packet, 2)
+		go dgvoice.ReceivePCM(vc, recv)
+
+		send := make(chan []int16, 2)
+		go dgvoice.SendPCM(vc, send)
+
+		vc.Speaking(true)
+		defer vc.Speaking(false)
+
+		for {
+			p, ok := <-recv
+			if !ok {
+				return
+			}
+			send <- p.PCM
+		}
 	}
 }
