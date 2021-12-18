@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -23,14 +24,19 @@ var (
 	bad_nouns     []string
 	BOT_TOKEN     string
 	CHANNEL_ID    string
+	GUILD_ID      string
 	MASTER_ID     string
 	PORT          string
 )
+
+var stopPlay = make(chan bool)
+var isPlaying = false
 
 func initEnv() {
 	ADIBOU_ID = os.Getenv("ADIBOU_ID")
 	BOT_TOKEN = os.Getenv("BOT_TOKEN")
 	CHANNEL_ID = os.Getenv("CHANNEL_ID")
+	GUILD_ID = os.Getenv("GUILD_ID")
 	MASTER_ID = os.Getenv("MASTER_ID")
 	PORT = os.Getenv("PORT")
 }
@@ -73,14 +79,6 @@ func main() {
 		fmt.Println("error opening connection,", err)
 		return
 	}
-
-	// voiceConnection, err := discord.ChannelVoiceJoin("152812927047434240", "337991922851250178", false, false)
-	// if err != nil {
-	// 	fmt.Println("fml:,", err.Error())
-	// 	return
-
-	// }
-	// fmt.Println("the channel id is,", voiceConnection.ChannelID)
 
 	ticker := time.NewTicker(2 * time.Minute)
 
@@ -157,8 +155,68 @@ func onChannelEvent(s *discordgo.Session, m *discordgo.VoiceStateUpdate) {
 	fmt.Printf("Channel: %v switched to %v \n", getUserName(s, m.UserID), getChannelName(s, m.ChannelID))
 }
 
+func findUserVoiceState(session *discordgo.Session, userid string) (*discordgo.VoiceState, error) {
+	guild, err := session.State.Guild(GUILD_ID)
+	if err != nil {
+		return nil, errors.New("Guild not found. Should never happen.")
+	}
+	for _, vs := range guild.VoiceStates {
+		if vs.UserID == userid {
+			return vs, nil
+		}
+
+	}
+	return nil, errors.New("Could not find the user in any voice channel.")
+}
+
 func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	fmt.Printf("Message: %v\n", m.Type)
+
+	if strings.HasPrefix(m.Content, "play ") {
+		if isPlaying {
+			return
+		}
+		for len(stopPlay) > 0 {
+			<-stopPlay
+		}
+
+		track := strings.Replace(m.Content, "play ", "", -1)
+		filename := fmt.Sprintf("%v.mp3", track)
+		if _, err := os.Stat(filename); err != nil {
+			fmt.Printf("The file %v does not exists.", filename)
+			return
+		}
+
+		userVoiceState, err := findUserVoiceState(s, m.Author.ID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		isPlaying = true
+		defer func() { isPlaying = false }()
+
+		vc, err := s.ChannelVoiceJoin(GUILD_ID, userVoiceState.ChannelID, false, false)
+		if err != nil {
+			fmt.Println("fml:,", err.Error())
+			return
+		}
+		defer vc.Disconnect()
+
+		fmt.Println("the channel id is,", vc.ChannelID)
+
+		vc.Speaking(true)
+		defer vc.Speaking(false)
+
+		dgvoice.PlayAudioFile(vc, filename, stopPlay)
+
+		return
+	}
+
+	if m.Content == "stop" {
+		stopPlay <- true
+		return
+	}
 
 	if m.ChannelID != CHANNEL_ID || m.Author.ID == s.State.User.ID {
 		return
@@ -194,33 +252,5 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.Content == "random poop" {
 		s.ChannelMessageSendReply(CHANNEL_ID, "Fucking poop lover :man_facepalming:", m.Reference())
-	}
-
-	if m.Content == "clear 1" {
-		vc, err := s.ChannelVoiceJoin("152812927047434240", "337991922851250178", false, false)
-		if err != nil {
-			fmt.Println("fml:,", err.Error())
-			return
-
-		}
-		defer vc.Close()
-
-		fmt.Println("the channel id is,", vc.ChannelID)
-		recv := make(chan *discordgo.Packet, 2)
-		go dgvoice.ReceivePCM(vc, recv)
-
-		send := make(chan []int16, 2)
-		go dgvoice.SendPCM(vc, send)
-
-		vc.Speaking(true)
-		defer vc.Speaking(false)
-
-		for {
-			p, ok := <-recv
-			if !ok {
-				return
-			}
-			send <- p.PCM
-		}
 	}
 }
