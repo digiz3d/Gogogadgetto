@@ -31,6 +31,7 @@ var (
 
 var stopPlay = make(chan bool)
 var isPlaying = false
+var weshRegex = regexp.MustCompile(`(?i)^w(?P<e>e+)sh.*`)
 
 func initEnv() {
 	ADIBOU_ID = os.Getenv("ADIBOU_ID")
@@ -222,11 +223,10 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	reg := regexp.MustCompile(`(?i)^w(?P<e>e+)sh.*`)
-	matches := reg.FindStringSubmatch(m.Content)
+	matches := weshRegex.FindStringSubmatch(m.Content)
 
 	if matches != nil {
-		indexMatch := reg.SubexpIndex("e")
+		indexMatch := weshRegex.SubexpIndex("e")
 		eeeee := matches[indexMatch]
 
 		if m.Author.ID != ADIBOU_ID && len(matches) > 0 {
