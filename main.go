@@ -19,7 +19,6 @@ import (
 )
 
 var (
-	ADIBOU_ID     string
 	bad_ajectives []string
 	bad_nouns     []string
 	BOT_TOKEN     string
@@ -34,7 +33,6 @@ var isPlaying = false
 var weshRegex = regexp.MustCompile(`(?i)^w(?P<e>e+)sh.*`)
 
 func initEnv() {
-	ADIBOU_ID = os.Getenv("ADIBOU_ID")
 	BOT_TOKEN = os.Getenv("BOT_TOKEN")
 	CHANNEL_ID = os.Getenv("CHANNEL_ID")
 	GUILD_ID = os.Getenv("GUILD_ID")
@@ -65,6 +63,7 @@ func main() {
 
 	discord, err := discordgo.New("Bot " + BOT_TOKEN)
 	if err != nil {
+		fmt.Printf("Soooo%v\n", err)
 		return
 	}
 
@@ -173,6 +172,11 @@ func findUserVoiceState(session *discordgo.Session, userid string) (*discordgo.V
 func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	fmt.Printf("Message: %v\n", m.Type)
 
+	if m.Author.ID == s.State.User.ID {
+		// ignore own messages
+		return
+	}
+
 	if strings.HasPrefix(m.Content, "play ") {
 		if isPlaying {
 			return
@@ -219,7 +223,8 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if m.ChannelID != CHANNEL_ID || m.Author.ID == s.State.User.ID {
+	if m.ChannelID != CHANNEL_ID {
+		//stop processing messages except from particular channel
 		return
 	}
 
@@ -229,7 +234,7 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		indexMatch := weshRegex.SubexpIndex("e")
 		eeeee := matches[indexMatch]
 
-		if m.Author.ID != ADIBOU_ID && len(matches) > 0 {
+		if len(matches) > 0 {
 			s.ChannelMessageSendReply(CHANNEL_ID, "w"+eeeee+"sh alors", m.Reference())
 			return
 		}
@@ -246,11 +251,7 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if m.Author.ID == ADIBOU_ID {
-		s.MessageReactionAdd(CHANNEL_ID, m.ID, ":hugging:")
-	}
-
-	if m.Content == "random poop" {
+	if contains([]string{"poop", "caca"}, strings.ToLower(m.Content)) {
 		s.ChannelMessageSendReply(CHANNEL_ID, "Fucking poop lover :man_facepalming:", m.Reference())
 	}
 }
