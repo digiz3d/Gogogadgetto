@@ -13,7 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
 )
@@ -83,6 +82,7 @@ func main() {
 	ticker := time.NewTicker(2 * time.Minute)
 
 	quit := make(chan struct{})
+
 	go func() {
 		for {
 			select {
@@ -132,8 +132,8 @@ func getUserName(s *discordgo.Session, userId string) string {
 	return user.Username
 }
 
-func getChannelName(s *discordgo.Session, userId string) string {
-	channel, err := s.Channel(userId)
+func getChannelName(s *discordgo.Session, channelId string) string {
+	channel, err := s.Channel(channelId)
 	if err != nil {
 		return "idk"
 	}
@@ -173,28 +173,19 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	fmt.Printf("Message: %v\n", m.Type)
 
 	if m.Author.ID == s.State.User.ID {
-		// ignore own messages
 		return
 	}
 
 	if strings.HasPrefix(m.Content, "play ") {
-		if isPlaying {
-			return
-		}
-		for len(stopPlay) > 0 {
-			<-stopPlay
-		}
-
-		track := strings.Replace(m.Content, "play ", "", -1)
-		filename := fmt.Sprintf("%v.mp3", track)
-		if _, err := os.Stat(filename); err != nil {
-			fmt.Printf("The file %v does not exists.", filename)
-			return
-		}
-
 		userVoiceState, err := findUserVoiceState(s, m.Author.ID)
 		if err != nil {
 			fmt.Println(err)
+			return
+		}
+
+		youtubeLink := strings.Replace(m.Content, "play ", "", -1)
+
+		if youtubeLink == "" {
 			return
 		}
 
@@ -210,10 +201,7 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		fmt.Println("the channel id is,", vc.ChannelID)
 
-		vc.Speaking(true)
-		defer vc.Speaking(false)
-
-		dgvoice.PlayAudioFile(vc, filename, stopPlay)
+		playYoutube(vc, youtubeLink)
 
 		return
 	}
