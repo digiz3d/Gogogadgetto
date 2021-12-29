@@ -18,7 +18,7 @@ const (
 	frameSize int = 960
 )
 
-func playYoutube(v *discordgo.VoiceConnection, link string) {
+func playYoutube(v *discordgo.VoiceConnection, link string, stopPlay chan bool) {
 	ytdl := exec.Command("youtube-dl", "-f", "bestaudio", link, "-o", "-")
 	ffmpeg := exec.Command("ffmpeg", "-i", "-", "-f", "s16le", "-ar", strconv.Itoa(frameRate), "-ac", strconv.Itoa(channels), "-")
 	ytdlOut, err := ytdl.StdoutPipe()
@@ -35,14 +35,12 @@ func playYoutube(v *discordgo.VoiceConnection, link string) {
 	send := make(chan []int16, 2)
 	defer close(send)
 
-	close := make(chan bool)
-
 	v.Speaking(true)
 	defer v.Speaking(false)
 
 	go func() {
 		dgvoice.SendPCM(v, send)
-		close <- true
+		stopPlay <- true
 	}()
 
 	for {
@@ -62,7 +60,7 @@ func playYoutube(v *discordgo.VoiceConnection, link string) {
 
 		select {
 		case send <- audiobuf:
-		case <-close:
+		case <-stopPlay:
 			return
 		}
 	}

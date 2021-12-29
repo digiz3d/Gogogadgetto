@@ -201,7 +201,7 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		fmt.Println("the channel id is,", vc.ChannelID)
 
-		playYoutube(vc, youtubeLink)
+		playYoutube(vc, youtubeLink, stopPlay)
 
 		return
 	}
