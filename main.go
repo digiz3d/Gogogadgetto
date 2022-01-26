@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -17,19 +18,23 @@ import (
 )
 
 var (
-	ADIBOU_ID     string
 	bad_ajectives []string
 	bad_nouns     []string
 	BOT_TOKEN     string
 	CHANNEL_ID    string
+	GUILD_ID      string
 	MASTER_ID     string
 	PORT          string
 )
 
+var stopPlay = make(chan bool)
+var isPlaying = false
+var weshRegex = regexp.MustCompile(`(?i)^w(?P<e>e+)sh.*`)
+
 func initEnv() {
-	ADIBOU_ID = os.Getenv("ADIBOU_ID")
 	BOT_TOKEN = os.Getenv("BOT_TOKEN")
 	CHANNEL_ID = os.Getenv("CHANNEL_ID")
+	GUILD_ID = os.Getenv("GUILD_ID")
 	MASTER_ID = os.Getenv("MASTER_ID")
 	PORT = os.Getenv("PORT")
 }
@@ -47,7 +52,7 @@ func readJsonFileAsStrings(path string) []string {
 }
 
 func main() {
-	words := []string{"wesh", "bien", "sisi"}
+	words := []string{"Adibou", "Fortnite", "Couter strike: Global warming"}
 
 	bad_ajectives = readJsonFileAsStrings("./bad-ajdectives.json")
 	bad_nouns = readJsonFileAsStrings("./bad-nouns.json")
@@ -55,19 +60,20 @@ func main() {
 	godotenv.Load()
 	initEnv()
 
-	d, err := discordgo.New("Bot " + BOT_TOKEN)
+	discord, err := discordgo.New("Bot " + BOT_TOKEN)
 	if err != nil {
+		fmt.Printf("Soooo%v\n", err)
 		return
 	}
 
-	d.AddHandler(onPresenceEvent)
-	d.AddHandler(onMessageEvent)
-	d.AddHandler(onVoiceEvent)
-	d.AddHandler(onChannelEvent)
+	discord.AddHandler(onPresenceEvent)
+	discord.AddHandler(onMessageEvent)
+	discord.AddHandler(onVoiceEvent)
+	discord.AddHandler(onChannelEvent)
 
-	d.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentsGuildPresences | discordgo.IntentsGuildMessageTyping | discordgo.IntentsGuildVoiceStates
+	discord.Identify.Intents = discordgo.IntentsAll
 
-	err = d.Open()
+	err = discord.Open()
 	if err != nil {
 		fmt.Println("error opening connection,", err)
 		return
@@ -76,11 +82,12 @@ func main() {
 	ticker := time.NewTicker(2 * time.Minute)
 
 	quit := make(chan struct{})
+
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				d.UpdateGameStatus(0, words[rand.Intn(len(words))])
+				discord.UpdateGameStatus(0, words[rand.Intn(len(words))])
 			case <-quit:
 				ticker.Stop()
 				return
@@ -103,7 +110,7 @@ func main() {
 
 	fmt.Println("closing discord")
 	close(quit)
-	d.Close()
+	discord.Close()
 }
 
 func contains(arr []string, str string) bool {
@@ -125,8 +132,8 @@ func getUserName(s *discordgo.Session, userId string) string {
 	return user.Username
 }
 
-func getChannelName(s *discordgo.Session, userId string) string {
-	channel, err := s.Channel(userId)
+func getChannelName(s *discordgo.Session, channelId string) string {
+	channel, err := s.Channel(channelId)
 	if err != nil {
 		return "idk"
 	}
@@ -148,21 +155,77 @@ func onChannelEvent(s *discordgo.Session, m *discordgo.VoiceStateUpdate) {
 	fmt.Printf("Channel: %v switched to %v \n", getUserName(s, m.UserID), getChannelName(s, m.ChannelID))
 }
 
+func findUserVoiceState(session *discordgo.Session, userid string) (*discordgo.VoiceState, error) {
+	guild, err := session.State.Guild(GUILD_ID)
+	if err != nil {
+		return nil, errors.New("Guild not found. Should never happen.")
+	}
+	for _, vs := range guild.VoiceStates {
+		if vs.UserID == userid {
+			return vs, nil
+		}
+
+	}
+	return nil, errors.New("Could not find the user in any voice channel.")
+}
+
 func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	fmt.Printf("Message: %v\n", m.Type)
 
-	if m.ChannelID != CHANNEL_ID || m.Author.ID == s.State.User.ID {
+	if m.Author.ID == s.State.User.ID {
 		return
 	}
 
-	reg := regexp.MustCompile(`(?i)^w(?P<e>e+)sh.*`)
-	matches := reg.FindStringSubmatch(m.Content)
+	if strings.HasPrefix(m.Content, "play ") {
+		if isPlaying {
+			return
+		}
+		userVoiceState, err := findUserVoiceState(s, m.Author.ID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		youtubeLink := strings.Replace(m.Content, "play ", "", -1)
+
+		if youtubeLink == "" {
+			return
+		}
+
+		isPlaying = true
+		defer func() { isPlaying = false }()
+
+		vc, err := s.ChannelVoiceJoin(GUILD_ID, userVoiceState.ChannelID, false, false)
+		if err != nil {
+			fmt.Println("fml:,", err.Error())
+			return
+		}
+		defer vc.Disconnect()
+
+		fmt.Println("the channel id is,", vc.ChannelID)
+
+		playYoutube(vc, youtubeLink, stopPlay)
+
+		return
+	}
+
+	if m.Content == "stop" {
+		stopPlay <- true
+		return
+	}
+
+	if m.ChannelID != CHANNEL_ID {
+		//stop processing messages except from particular channel
+		return
+	}
+
+	matches := weshRegex.FindStringSubmatch(m.Content)
 
 	if matches != nil {
-		indexMatch := reg.SubexpIndex("e")
+		indexMatch := weshRegex.SubexpIndex("e")
 		eeeee := matches[indexMatch]
 
-		if m.Author.ID != ADIBOU_ID && len(matches) > 0 {
+		if len(matches) > 0 {
 			s.ChannelMessageSendReply(CHANNEL_ID, "w"+eeeee+"sh alors", m.Reference())
 			return
 		}
@@ -179,11 +242,7 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	if m.Author.ID == ADIBOU_ID {
-		s.MessageReactionAdd(CHANNEL_ID, m.ID, ":hugging:")
-	}
-
-	if m.Content == "random poop" {
+	if contains([]string{"poop", "caca"}, strings.ToLower(m.Content)) {
 		s.ChannelMessageSendReply(CHANNEL_ID, "Fucking poop lover :man_facepalming:", m.Reference())
 	}
 }

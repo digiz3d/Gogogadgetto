@@ -1,3 +1,5 @@
+github.com/bwmarrin/dgvoice v0.0.0-20210225172318-caaac756e02e h1:IdfGDWLNL/ZAHda33oiKnkoaWWsQ6vyO+MDslrcJ43M=
+github.com/bwmarrin/dgvoice v0.0.0-20210225172318-caaac756e02e/go.mod h1:DT3heoMAQGrOExZ3Rb3TBOQ4Bm+wD4H48KFnt1YfLoQ=
 github.com/bwmarrin/discordgo v0.23.2 h1:BzrtTktixGHIu9Tt7dEE6diysEF9HWnXeHuoJEt2fH4=
 github.com/bwmarrin/discordgo v0.23.2/go.mod h1:c1WtWUGN6nREDmzIpyTp/iD3VYt4Fpx+bVyfBG7JE+M=
 github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH/Q=
@@ -6,3 +8,5 @@ github.com/joho/godotenv v1.4.0 h1:3l4+N6zfMWnkbPEXKng2o2/MR5mSwTrBih4ZEkkz1lg=
 github.com/joho/godotenv v1.4.0/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 golang.org/x/crypto v0.0.0-20181030102418-4d3f4d9ffa16 h1:y6ce7gCWtnH+m3dCjzQ1PCuwl28DDIc3VNnvY29DlIA=
 golang.org/x/crypto v0.0.0-20181030102418-4d3f4d9ffa16/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
+layeh.com/gopus v0.0.0-20210501142526-1ee02d434e32 h1:/S1gOotFo2sADAIdSGk1sDq1VxetoCWr6f5nxOG0dpY=
+layeh.com/gopus v0.0.0-20210501142526-1ee02d434e32/go.mod h1:yDtyzWZDFCVnva8NGtg38eH2Ns4J0D/6hD+MMeUGdF0=
