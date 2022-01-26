@@ -177,6 +177,9 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if strings.HasPrefix(m.Content, "play ") {
+		if isPlaying {
+			return
+		}
 		userVoiceState, err := findUserVoiceState(s, m.Author.ID)
 		if err != nil {
 			fmt.Println(err)
