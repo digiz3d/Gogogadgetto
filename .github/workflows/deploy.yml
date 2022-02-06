@@ -1,0 +1,38 @@
+name: Deploy via SSH
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checking out
+        uses: actions/checkout@v2
+      - name: Install go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '^1.17.2'
+      - name: Build bot
+        run: go build .
+      - name: Copy exec to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password : ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          source: "main,bad-ajdectives.json,bad-nouns.json"
+          target: .
+      - name: Deploying
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password : ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |
+            pkill tmux
+            chmod +x ./main
+            tmux new -d './main'
