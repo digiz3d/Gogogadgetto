@@ -19,17 +19,29 @@ const (
 )
 
 func playYoutube(v *discordgo.VoiceConnection, link string, stopPlay chan bool) {
-	ytdl := exec.Command("youtube-dl", "-f", "bestaudio", link, "-o", "-")
+	ytdl := exec.Command("yt-dlp", "-f", "bestaudio", link, "-o", "-")
 	ffmpeg := exec.Command("ffmpeg", "-i", "-", "-f", "s16le", "-ar", strconv.Itoa(frameRate), "-ac", strconv.Itoa(channels), "-")
 	ytdlOut, err := ytdl.StdoutPipe()
+	if err != nil {
+		fmt.Println("ytdlOut err", err)
+	}
 	ffmpeg.Stdin = ytdlOut
 	ffmpegOut, err := ffmpeg.StdoutPipe()
+	if err != nil {
+		fmt.Println("ffmpegOut err", err)
+	}
 	ffmpegbuf := bufio.NewReaderSize(ffmpegOut, 16384)
 
 	err = ytdl.Start()
+	if err != nil {
+		fmt.Println("ytdl.Start err", err)
+	}
 	defer ytdl.Process.Kill()
 
 	err = ffmpeg.Start()
+	if err != nil {
+		fmt.Println("ffmpeg.Start err", err)
+	}
 	defer ffmpeg.Process.Kill()
 
 	send := make(chan []int16, 2)
