@@ -52,7 +52,6 @@ func playYoutube(v *discordgo.VoiceConnection, link string, stopPlay chan bool) 
 
 	go func() {
 		dgvoice.SendPCM(v, send)
-		stopPlay <- true
 	}()
 
 	for {
@@ -61,6 +60,7 @@ func playYoutube(v *discordgo.VoiceConnection, link string, stopPlay chan bool) 
 
 		err = binary.Read(ffmpegbuf, binary.LittleEndian, &audiobuf)
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			fmt.Print("End of stream. GGWP")
 			return
 		}
 		if err != nil {
@@ -69,7 +69,6 @@ func playYoutube(v *discordgo.VoiceConnection, link string, stopPlay chan bool) 
 		}
 
 		// Send received PCM to the sendPCM channel
-
 		select {
 		case send <- audiobuf:
 		case <-stopPlay:
