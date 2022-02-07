@@ -180,6 +180,7 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if isPlaying {
 			return
 		}
+
 		userVoiceState, err := findUserVoiceState(s, m.Author.ID)
 		if err != nil {
 			fmt.Println(err)
@@ -210,8 +211,10 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if m.Content == "stop" {
+		for len(stopPlay) > 0 {
+			return
+		}
 		stopPlay <- true
-		return
 	}
 
 	if m.ChannelID != CHANNEL_ID {
