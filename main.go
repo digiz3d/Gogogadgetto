@@ -52,7 +52,7 @@ func readJsonFileAsStrings(path string) []string {
 }
 
 func main() {
-	words := []string{"Adibou", "Fortnite", "Couter strike: Global warming"}
+	words := []string{"A dit bouh", "For night", "Counter Offensive: Global Strike"}
 
 	bad_ajectives = readJsonFileAsStrings("./bad-ajdectives.json")
 	bad_nouns = readJsonFileAsStrings("./bad-nouns.json")
@@ -234,7 +234,7 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
-	hellowords := []string{"hey", "bonjour", "hi", "salut", "wesh"}
+	hellowords := []string{"hey", "bonjour", "hi", "salut", "wesh", "yop", "yo", "coucou"}
 
 	if m.Content == "!insult" {
 		s.ChannelMessageSendReply(CHANNEL_ID, fmt.Sprintf("%s %s !", makeUserRef(m.Author.ID), makeInsult()), m.Reference())
