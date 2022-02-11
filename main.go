@@ -25,6 +25,7 @@ var (
 	GUILD_ID      string
 	MASTER_ID     string
 	PORT          string
+	ADIBOU_ID     string
 )
 
 var stopPlay = make(chan bool)
@@ -37,6 +38,7 @@ func initEnv() {
 	GUILD_ID = os.Getenv("GUILD_ID")
 	MASTER_ID = os.Getenv("MASTER_ID")
 	PORT = os.Getenv("PORT")
+	ADIBOU_ID = os.Getenv("ADIBOU_ID")
 }
 
 func readJsonFileAsStrings(path string) []string {
@@ -172,7 +174,7 @@ func findUserVoiceState(session *discordgo.Session, userid string) (*discordgo.V
 func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	fmt.Printf("Message: %v\n", m.Type)
 
-	if m.Author.ID == s.State.User.ID {
+	if m.Author.ID == s.State.User.ID || m.Author.ID == ADIBOU_ID {
 		return
 	}
 
@@ -222,27 +224,25 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	matches := weshRegex.FindStringSubmatch(m.Content)
+	hellowords := []string{"hey", "bonjour", "hi", "salut", "wesh", "yop", "yo", "coucou"}
+	if m.Author.ID == MASTER_ID && contains(hellowords, strings.ToLower(m.Content)) {
+		s.ChannelMessageSendReply(CHANNEL_ID, "Hello, master", m.Reference())
+		return
+	}
 
-	if matches != nil {
+	weshMatches := weshRegex.FindStringSubmatch(m.Content)
+	if weshMatches != nil {
 		indexMatch := weshRegex.SubexpIndex("e")
-		eeeee := matches[indexMatch]
+		eeeee := weshMatches[indexMatch]
 
-		if len(matches) > 0 {
+		if len(weshMatches) > 0 {
 			s.ChannelMessageSendReply(CHANNEL_ID, "w"+eeeee+"sh alors", m.Reference())
 			return
 		}
 	}
 
-	hellowords := []string{"hey", "bonjour", "hi", "salut", "wesh", "yop", "yo", "coucou"}
-
 	if m.Content == "!insult" {
 		s.ChannelMessageSendReply(CHANNEL_ID, fmt.Sprintf("%s %s !", makeUserRef(m.Author.ID), makeInsult()), m.Reference())
-	}
-
-	if m.Author.ID == MASTER_ID && contains(hellowords, strings.ToLower(m.Content)) {
-		s.ChannelMessageSendReply(CHANNEL_ID, "Hello, master", m.Reference())
-		return
 	}
 
 	if contains([]string{"poop", "caca"}, strings.ToLower(m.Content)) {
