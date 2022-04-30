@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -18,14 +17,12 @@ import (
 )
 
 var (
-	bad_ajectives []string
-	bad_nouns     []string
-	BOT_TOKEN     string
-	CHANNEL_ID    string
-	GUILD_ID      string
-	MASTER_ID     string
-	PORT          string
-	ADIBOU_ID     string
+	BOT_TOKEN  string
+	CHANNEL_ID string
+	GUILD_ID   string
+	MASTER_ID  string
+	PORT       string
+	ADIBOU_ID  string
 )
 
 var stopPlay = make(chan bool)
@@ -41,23 +38,8 @@ func initEnv() {
 	ADIBOU_ID = os.Getenv("ADIBOU_ID")
 }
 
-func readJsonFileAsStrings(path string) []string {
-	data, err := os.ReadFile(path)
-
-	if err != nil {
-		panic(err)
-	}
-
-	var strings []string
-	json.Unmarshal([]byte(data), &strings)
-	return strings
-}
-
 func main() {
 	words := []string{"A dit bouh", "For night", "Counter Offensive: Global Strike"}
-
-	bad_ajectives = readJsonFileAsStrings("./bad-ajdectives.json")
-	bad_nouns = readJsonFileAsStrings("./bad-nouns.json")
 
 	godotenv.Load()
 	initEnv()
@@ -140,9 +122,6 @@ func getChannelName(s *discordgo.Session, channelId string) string {
 		return "idk"
 	}
 	return channel.Name
-}
-func makeInsult() string {
-	return fmt.Sprintf("%s %s", bad_ajectives[rand.Intn(len(bad_ajectives))], bad_nouns[rand.Intn(len(bad_nouns))])
 }
 
 func onPresenceEvent(s *discordgo.Session, m *discordgo.PresenceUpdate) {
@@ -239,10 +218,6 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSendReply(CHANNEL_ID, "w"+eeeee+"sh alors", m.Reference())
 			return
 		}
-	}
-
-	if m.Content == "!insult" {
-		s.ChannelMessageSendReply(CHANNEL_ID, fmt.Sprintf("%s %s !", makeUserRef(m.Author.ID), makeInsult()), m.Reference())
 	}
 
 	if contains([]string{"poop", "caca"}, strings.ToLower(m.Content)) {
