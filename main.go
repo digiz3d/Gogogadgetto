@@ -234,7 +234,7 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSendReply(m.ChannelID, "Error: "+err.Error(), m.Reference())
 			return
 		}
-		s.ChannelMessageSendReply(m.ChannelID, "Thread: "+pic, m.Reference())
+		s.ChannelMessageSendReply(m.ChannelID, pic, m.Reference())
 		return
 	}
 
