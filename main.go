@@ -43,6 +43,7 @@ func main() {
 
 	godotenv.Load()
 	initEnv()
+	init4chan()
 
 	discord, err := discordgo.New("Bot " + BOT_TOKEN)
 	if err != nil {
@@ -222,5 +223,19 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if contains([]string{"poop", "caca"}, strings.ToLower(m.Content)) {
 		s.ChannelMessageSendReply(CHANNEL_ID, "Fucking poop lover :man_facepalming:", m.Reference())
+		return
 	}
+
+	if strings.HasPrefix(m.Content, "random ") {
+		boardName := strings.Replace(m.Content, "random ", "", -1)
+		// get random pic from 4chan
+		pic, err := getRandomPicture(boardName)
+		if err != nil {
+			s.ChannelMessageSendReply(m.ChannelID, "Error: "+err.Error(), m.Reference())
+			return
+		}
+		s.ChannelMessageSendReply(m.ChannelID, "Thread: "+pic, m.Reference())
+		return
+	}
+
 }
