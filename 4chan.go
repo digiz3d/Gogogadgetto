@@ -133,6 +133,10 @@ func getRandomPicture(boardName string) (string, error) {
 		}
 	}
 
+	if len(images) == 0 {
+		errors.New("No pic found sorry bro")
+	}
+
 	randomImage := images[rand.Intn(len(images))]
 
 	return randomImage, nil
