@@ -124,11 +124,12 @@ func getRandomPicture(boardName string) (string, error) {
 
 	// for each post, add the images to the images array
 	for _, post := range posts.(map[string]interface{})["posts"].([]interface{}) {
-		if post.(map[string]interface{})["ext"] == ".jpg" {
+		c := post.(map[string]interface{})["ext"].(string)
+		if c == ".jpg" || c == ".png" || c == ".gif" || c == ".webm" {
 			timestamp := int(post.(map[string]interface{})["tim"].(float64))
 			ts := fmt.Sprint(timestamp)
 
-			images = append(images, "https://i.4cdn.org/"+boardName+"/"+ts+post.(map[string]interface{})["ext"].(string))
+			images = append(images, "https://i.4cdn.org/"+boardName+"/"+ts+c)
 		}
 	}
 
