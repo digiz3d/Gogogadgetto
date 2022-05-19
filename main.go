@@ -152,7 +152,7 @@ func findUserVoiceState(session *discordgo.Session, userid string) (*discordgo.V
 }
 
 func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
-	fmt.Printf("Message: %v\n", m.Type)
+	fmt.Printf("Message: %v %v\n", m.Type, m.ChannelID)
 
 	if m.Author.ID == s.State.User.ID || m.Author.ID == ADIBOU_ID {
 		return
