@@ -17,12 +17,13 @@ import (
 )
 
 var (
-	BOT_TOKEN  string
-	CHANNEL_ID string
-	GUILD_ID   string
-	MASTER_ID  string
-	PORT       string
-	ADIBOU_ID  string
+	BOT_TOKEN       string
+	CHANNEL_ID      string
+	GUILD_ID        string
+	MASTER_ID       string
+	PORT            string
+	ADIBOU_ID       string
+	GPT3_SECRET_KEY string
 )
 
 var stopPlay = make(chan bool)
@@ -36,6 +37,7 @@ func initEnv() {
 	MASTER_ID = os.Getenv("MASTER_ID")
 	PORT = os.Getenv("PORT")
 	ADIBOU_ID = os.Getenv("ADIBOU_ID")
+	GPT3_SECRET_KEY = os.Getenv("GPT3_SECRET_KEY")
 }
 
 func main() {
@@ -44,6 +46,7 @@ func main() {
 	godotenv.Load()
 	initEnv()
 	init4chan()
+	initGpt3()
 
 	discord, err := discordgo.New("Bot " + BOT_TOKEN)
 	if err != nil {
@@ -201,6 +204,12 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if m.ChannelID != CHANNEL_ID {
 		//stop processing messages except from particular channel
+		return
+	}
+
+	if (strings.HasPrefix(m.Content, "Qu") || strings.HasPrefix(m.Content, "Tu ") || strings.HasPrefix(m.Content, "Vous ")) && strings.HasSuffix(m.Content, "?") {
+		answer := completeGpt3(m.Content)
+		s.ChannelMessageSendReply(m.ChannelID, answer, m.Reference())
 		return
 	}
 
