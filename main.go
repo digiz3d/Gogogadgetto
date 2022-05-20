@@ -24,6 +24,7 @@ var (
 	PORT            string
 	ADIBOU_ID       string
 	GPT3_SECRET_KEY string
+	GPT2_SECRET_KEY string
 )
 
 var stopPlay = make(chan bool)
@@ -38,6 +39,7 @@ func initEnv() {
 	PORT = os.Getenv("PORT")
 	ADIBOU_ID = os.Getenv("ADIBOU_ID")
 	GPT3_SECRET_KEY = os.Getenv("GPT3_SECRET_KEY")
+	GPT2_SECRET_KEY = os.Getenv("GPT2_SECRET_KEY")
 }
 
 func main() {
@@ -155,9 +157,33 @@ func findUserVoiceState(session *discordgo.Session, userid string) (*discordgo.V
 }
 
 func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
-	fmt.Printf("Message: %v %v\n", m.Type, m.ChannelID)
+	fmt.Printf("Message: %v %v : %v\n", m.Type, m.ChannelID, m.Content)
 
 	if m.Author.ID == s.State.User.ID || m.Author.ID == ADIBOU_ID {
+		return
+	}
+
+	if m.MessageReference != nil {
+		previousMessages := []string{}
+
+		prevChannelId := m.MessageReference.ChannelID
+		prevMessageId := m.MessageReference.MessageID
+		for ok := true; ok; ok = true {
+			prev, err := s.ChannelMessage(prevChannelId, prevMessageId)
+			if err != nil {
+				break
+			}
+			previousMessages = append(previousMessages, prev.Content)
+			if prev.MessageReference == nil {
+				break
+			}
+			prevChannelId = prev.MessageReference.ChannelID
+			prevMessageId = prev.MessageReference.MessageID
+
+		}
+
+		answer := answerGpt2(m.Content, previousMessages)
+		s.ChannelMessageSendReply(m.ChannelID, answer, m.Reference())
 		return
 	}
 
@@ -246,5 +272,4 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		s.ChannelMessageSendReply(m.ChannelID, pic, m.Reference())
 		return
 	}
-
 }
