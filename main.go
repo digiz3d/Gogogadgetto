@@ -168,7 +168,7 @@ func getPreviousMessage(s *discordgo.Session, prevChannelId string, prevMessageI
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("Message: %v %v : %v\n", prev.Type, prev.ChannelID, prev.Content)
+	fmt.Printf("Not cached message: %v %v : %v\n", prev.Type, prev.ChannelID, prev.Content)
 	cachedMessages[prevChannelId+prevMessageId] = prev
 	return prev, nil
 }
@@ -185,6 +185,9 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		prevChannelId := m.MessageReference.ChannelID
 		prevMessageId := m.MessageReference.MessageID
+
+		shouldAnswer := false
+
 		for {
 			prev, err := getPreviousMessage(s, prevChannelId, prevMessageId)
 			if err != nil {
@@ -194,14 +197,24 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 			if prev.MessageReference == nil {
 				break
 			}
+			if prev.Author.ID == s.State.User.ID {
+				shouldAnswer = true
+			}
+
 			prevChannelId = prev.MessageReference.ChannelID
 			prevMessageId = prev.MessageReference.MessageID
+		}
+
+		if !shouldAnswer {
+			goto STILLPROCESSMESSAGE
 		}
 
 		answer := answerGpt2(m.Content, previousMessages)
 		s.ChannelMessageSendReply(m.ChannelID, answer, m.Reference())
 		return
 	}
+
+STILLPROCESSMESSAGE:
 
 	if strings.HasPrefix(m.Content, "play ") {
 		if isPlaying {
