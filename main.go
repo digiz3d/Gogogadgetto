@@ -145,7 +145,7 @@ func onChannelEvent(s *discordgo.Session, m *discordgo.VoiceStateUpdate) {
 func findUserVoiceState(session *discordgo.Session, userid string) (*discordgo.VoiceState, error) {
 	guild, err := session.State.Guild(GUILD_ID)
 	if err != nil {
-		return nil, errors.New("Guild not found. Should never happen.")
+		return nil, errors.New("guild not found")
 	}
 	for _, vs := range guild.VoiceStates {
 		if vs.UserID == userid {
@@ -153,7 +153,24 @@ func findUserVoiceState(session *discordgo.Session, userid string) (*discordgo.V
 		}
 
 	}
-	return nil, errors.New("Could not find the user in any voice channel.")
+	return nil, errors.New("could not find the user in any voice channel")
+}
+
+var cachedMessages = make(map[string]*discordgo.Message)
+
+func getPreviousMessage(s *discordgo.Session, prevChannelId string, prevMessageId string) (st *discordgo.Message, err error) {
+	cachedPreviousMessage := cachedMessages[prevChannelId+prevMessageId]
+	if cachedPreviousMessage != nil {
+		fmt.Printf("Got cached message: %v %v : %v\n", cachedPreviousMessage.Type, cachedPreviousMessage.ChannelID, cachedPreviousMessage.Content)
+		return cachedPreviousMessage, nil
+	}
+	prev, err := s.ChannelMessage(prevChannelId, prevMessageId)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("Message: %v %v : %v\n", prev.Type, prev.ChannelID, prev.Content)
+	cachedMessages[prevChannelId+prevMessageId] = prev
+	return prev, nil
 }
 
 func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -168,8 +185,8 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		prevChannelId := m.MessageReference.ChannelID
 		prevMessageId := m.MessageReference.MessageID
-		for ok := true; ok; ok = true {
-			prev, err := s.ChannelMessage(prevChannelId, prevMessageId)
+		for {
+			prev, err := getPreviousMessage(s, prevChannelId, prevMessageId)
 			if err != nil {
 				break
 			}
@@ -179,7 +196,6 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 			}
 			prevChannelId = prev.MessageReference.ChannelID
 			prevMessageId = prev.MessageReference.MessageID
-
 		}
 
 		answer := answerGpt2(m.Content, previousMessages)
