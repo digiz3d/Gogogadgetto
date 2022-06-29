@@ -221,15 +221,15 @@ STILLPROCESSMESSAGE:
 			return
 		}
 
-		userVoiceState, err := findUserVoiceState(s, m.Author.ID)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
 		youtubeLink := strings.Replace(m.Content, "play ", "", -1)
 
 		if youtubeLink == "" {
+			return
+		}
+
+		userVoiceState, err := findUserVoiceState(s, m.Author.ID)
+		if err != nil {
+			fmt.Println(err)
 			return
 		}
 
@@ -247,6 +247,31 @@ STILLPROCESSMESSAGE:
 
 		playYoutube(vc, youtubeLink, stopPlay)
 
+		return
+	}
+
+	if strings.HasPrefix(m.Content, "sayfr ") {
+		if isPlaying {
+			return
+		}
+		textToSay := strings.Replace(m.Content, "sayfr ", "", -1)
+		if textToSay == "" {
+			return
+		}
+		userVoiceState, err := findUserVoiceState(s, m.Author.ID)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		vc, err := s.ChannelVoiceJoin(GUILD_ID, userVoiceState.ChannelID, false, false)
+		if err != nil {
+			fmt.Println("fml:,", err.Error())
+			return
+		}
+		defer vc.Disconnect()
+
+		fmt.Println("the channel id is,", vc.ChannelID)
+		textToSpeech(vc, textToSay)
 		return
 	}
 
