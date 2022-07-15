@@ -326,4 +326,8 @@ STILLPROCESSMESSAGE:
 		s.ChannelMessageSendReply(m.ChannelID, pic, m.Reference())
 		return
 	}
+
+	if m.Content == "reboot" {
+		os.Exit(0)
+	}
 }
