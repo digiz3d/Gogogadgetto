@@ -1,0 +1,6 @@
+.env
+.github/
+.vscode/
+main
+README.md
+vendor/

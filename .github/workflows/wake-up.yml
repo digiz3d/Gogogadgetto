@@ -10,4 +10,4 @@ jobs:
   wake-up:
     runs-on: ubuntu-latest
     steps:
-      - run: curl https://gogogadgetto.herokuapp.com
+      - run: curl https://gogogadgetto.onrender.com
