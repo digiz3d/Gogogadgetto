@@ -205,16 +205,12 @@ func onMessageEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 			prevMessageId = prev.MessageReference.MessageID
 		}
 
-		if !shouldAnswer {
-			goto STILLPROCESSMESSAGE
+		if shouldAnswer {
+			answer := answerGpt2(m.Content, previousMessages)
+			s.ChannelMessageSendReply(m.ChannelID, answer, m.Reference())
+			return
 		}
-
-		answer := answerGpt2(m.Content, previousMessages)
-		s.ChannelMessageSendReply(m.ChannelID, answer, m.Reference())
-		return
 	}
-
-STILLPROCESSMESSAGE:
 
 	if strings.HasPrefix(m.Content, "play ") {
 		if isPlaying {

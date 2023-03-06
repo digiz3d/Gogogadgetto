@@ -6,6 +6,6 @@ RUN rm -rf ~/.cache/pip
 
 WORKDIR /app
 COPY . .
-RUN go build
+RUN go build -ldflags "-s -w"
 CMD ["./main"]
 EXPOSE ${PORT}
