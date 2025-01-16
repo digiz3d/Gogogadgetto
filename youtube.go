@@ -19,7 +19,7 @@ const (
 )
 
 func playYoutube(v *discordgo.VoiceConnection, link string, stopPlay chan bool) {
-	ytdl := exec.Command("yt-dlp", "-f", "bestaudio", link, "-o", "-")
+	ytdl := exec.Command("./venv/bin/yt-dlp", "-f", "bestaudio", link, "-o", "-")
 	ffmpeg := exec.Command("ffmpeg", "-i", "-", "-f", "s16le", "-ar", strconv.Itoa(frameRate), "-ac", strconv.Itoa(channels), "-")
 	ytdlOut, err := ytdl.StdoutPipe()
 	if err != nil {

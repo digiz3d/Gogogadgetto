@@ -4,8 +4,8 @@ go 1.18
 
 require (
 	github.com/bwmarrin/dgvoice v0.0.0-20210225172318-caaac756e02e
-	github.com/bwmarrin/discordgo v0.25.0
-	github.com/joho/godotenv v1.4.0
+	github.com/bwmarrin/discordgo v0.28.1
+	github.com/joho/godotenv v1.5.1
 	github.com/sashabaranov/go-gpt3 v0.0.0-20220314221030-260ef874de6c
 )
 
